@@ -133,15 +133,30 @@ def chat():
             session['quest_cnt'] = session['quest_cnt'] + 1
             
             if session['quest_cnt'] == 5:
-
                 ans = ""
                 for i in range(5):
                     ans = ans + str(i+1) + ". " + QUEST[i] + " - " + session['answers'][i] + "\n"
+                
+                conn = get_db()
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM products WHERE user_id = ?', (user_id,))
+                products = cursor.fetchall()
+                conn.close()
+                
+                if products:
+                    ans = ans + "\nпродукты в холодильнике:\n"
+                    for product in products:
+                        ans = ans + "- " + product['name'] + " (" + str(product['kkal']) + " ккал, срок " + str(product['date']) + " дней)\n"
+                else:
+                    ans = ans + "\nВ холодильнике ничего нет\n"
+                
+                ans = ans + "\nДай рекомендацию по диете, около 5 предложений. Скажи что нужно исправить"
                 
                 answer = get_ans(user_id, ans)
                 
                 session['quest_cnt'] = 0
                 session['answers'] = []
+    
     
 
     return render_template('chat.html', 
