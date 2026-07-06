@@ -14,7 +14,7 @@ dotenv.load_dotenv()
 def index():
 
     if 'user' not in session:
-        session['user'] = str(uuid.uuid4())  # <-- генерируем ID
+        session['user'] = str(uuid.uuid4()) 
     
     user = session.get('user')
     return render_template(
@@ -29,7 +29,9 @@ client = OpenAI(
 )
 
 system_prompt = """
-    Ты - человек, который следит за каллориями. ты должен по продукту, который вводит пользователь вывести каллорийность
+    Ты - диетолог
+    Твоя цель исходя, из 5 вопросов написать вывод о диете которая предпочтительна пользователю
+    Сохраняй доброжелательный тон
 """
 
 users_history = {}
@@ -61,26 +63,52 @@ def get_ans(user_id, data):
 
         return answer.strip()
 
-    except RateLimitError:
-        return "перегрузка"
-    except APIError:
-        return "Ошибка API"
+    except:
+        return "не получилось"
 
-    except Exception as e:
-        return f"Произошла ошибка при получении ответа: {str(e)}"
+QUEST = [
+    "Что есть в холодильнике?",
+    "Что ты ешь каждый день?",
+    "Как часто занимаешься спортом?",
+    "Какая цель диеты?",
+    "Есть ли аллергии или предпочтения в еде?"
+]
 
 @app.route("/chat", methods=['GET', 'POST'])
 def chat():
     
     user_id = session['user']
     answer = None
+
+    if 'quest_cnt' not in session:
+        session['quest_cnt'] = 0
+        session['answers'] = []
     
     if request.method == 'POST':
-        question = request.form.get('question', '').strip()
-        if question:
-            answer = get_ans(user_id, question)
+        text = request.form.get('question', '').strip()
+        
+        if text:
+            session['answers'].append(text)
+            session['quest_cnt'] = session['quest_cnt'] + 1
+            
+            if session['quest_cnt'] == 5:
+
+                ans = ""
+                for i in range(5):
+                    ans = ans + str(i+1) + ". " + QUEST[i] + " - " + session['answers'][i] + "\n"
+                
+                answer = get_ans(user_id, ans)
+                
+                session['quest_cnt'] = 0
+                session['answers'] = []
     
-    return render_template('chat.html', answer=answer)
+
+    return render_template('chat.html', 
+                         answer=answer, 
+                         questions=QUEST,
+                         cur=session['quest_cnt'],
+                         answers=session['answers'])
+
 
 
 
