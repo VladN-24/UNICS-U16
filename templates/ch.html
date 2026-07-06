@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+    <link href="pg11.css" rel="stylesheet"> 
+    <meta charset="utf-8">c
+    <title>Чат с ИИ</title>
+</head>
+<body>
+  <header>
+    <h1>Посчитай каллории</h1>
+</header>
+    <div class="container">    
+        <p style="text-align: center" >Введи блюдо</p>
+
+        <form method="post">
+            <textarea name="question" rows="4" cols="40" required></textarea>
+            <br>
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
+    <p>
+        <a href="{{ url_for('index') }}">Главная</a> |
+
+    </p>
+
+</body>
+</html>
