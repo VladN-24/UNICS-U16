@@ -155,95 +155,57 @@ def chat():
 @app.route("/holodilnik", methods=['GET', 'POST'])
 def holodilnik():
     if 'user' not in session:
-        return redirect(url_for('index'))
+        return redirect(url_for(index))
+    
+    user_id = session['user']
     conn = get_db()
     cursor = conn.cursor()
 
-    user = session['user']
 
     if request.method == 'POST':
-        name = request.form['name']
-         = request.form['text']
-        name = request.form['text']
-
-        cursor.execute('INSERT INTO products (user_id, name, kkal, date) VALUES (?, ?)', (user['id'], name, kkal, date))
-
-        conn.commit()
-        conn.close()
-        return redirect(url_for('notes'))
-    cursor.execute('SELECT * FROM notes WHERE user_id = ?', (user['id'],))
-
-    notes = cursor.fetchall()
+        name = request.form.get('name', '').strip()
+        kkal = request.form.get('kkal', '').strip()
+        date = request.form.get('date', '').strip()
+        
+        if name and kkal and date:
+            cursor.execute(
+                'INSERT INTO products (user_id, name, kkal, date) VALUES (?, ?, ?, ?)',
+                (user_id, name, kkal, date)
+            )
+            conn.commit()
+            conn.close()
+            return redirect(url_for('holodilnik'))
+    
+    cursor.execute('SELECT * FROM products WHERE user_id = ?', (user_id,))
+    products = cursor.fetchall()
     conn.close()   
 
-    return render_template('notes.html', notes = notes)
+    return render_template('holodilnik.html', products=products)
 
-
-@app.route('/delete_note/<int:note_id>')
-def delete_note(note_id):
+@app.route('/delete_product/<int:product_id>')
+def delete_product(product_id):
     if 'user' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        'SELECT id FROM users WHERE login = ?',
-        (session['user'],)
-    )
-    user = cursor.fetchone()
-    if user is None:
-        session.pop("user", None)
-        conn.close()
-        return redirect(url_for("login"))
-
-    cursor.execute(
-        'DELETE FROM notes WHERE id = ? AND user_id = ?',
-        (note_id, user['id'])
-    )
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('notes'))
-
-
-@app.route('/change_note/<int:note_id>', methods=['GET', 'POST'])
-def change_note(note_id):
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    new_text = request.form.get('new_text')
-    if not new_text:
-        return redirect(url_for('notes'))
-
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        'SELECT id FROM users WHERE login = ?',
-        (session['user'],)
-    )
-    user = cursor.fetchone()
-    if user is None:
-        session.pop("user", None)
-        conn.close()
-        return redirect(url_for("login"))
-
+        return redirect(url_for('index'))
     
-
+    user_id = session['user']
+    conn = get_db()
+    cursor = conn.cursor()
+    
     cursor.execute(
-       'UPDATE notes SET text = ? WHERE id = ? AND user_id = ?', (new_text, note_id, user['id'])
+        'DELETE FROM products WHERE id = ? AND user_id = ?',
+        (product_id, user_id)
     )
-
+    
     conn.commit()
     conn.close()
-
-    return redirect(url_for('notes'))
-
-
+    
+    return redirect(url_for('holodilnik'))
 
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
+
