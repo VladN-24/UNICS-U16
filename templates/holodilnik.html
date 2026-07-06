@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <title>Холодильник</title>
+  </head>
+  <body>
+    <h1>мой холодильник</h1>
+
+    <form method="post">
+      <input type="text" name="text" placeholder="Введите продукт" required>
+      <input type="text" name="number" placeholder="Введите ккалорийность(число)" required>
+      <input type="text" name="number" placeholder="Введите срок годности(кол-во дней до конца)" required>
+      <button type="submit">добавить</button>
+    </form>
+
+    <hr>
+
+    {% for note in notes %}
+      <div>
+        <p><b>{{ loop.index }}.</b> {{ note.text }}</p>
+
+        <form method="post" action="{{ url_for('change_product', note_id=note.id) }}">
+                <input type="text" name="new_text" value="{{ product.text }}" required>
+                <button type="submit">Изменить</button>
+            </form>
+            
+            <a href="{{ url_for('delete_product', product_id=product.id) }}">Удалить</a>
+            <hr>
+      </div>
+      
+    {% else %}
+        <p>Продуктов пока нет</p>
+    {%endfor%}
+
+
+
+    <a href="{{ url_for('index') }}">на главную</a>
+  </body>
+</html>

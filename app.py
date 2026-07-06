@@ -5,10 +5,51 @@ import requests
 import uuid
 import dotenv
 import os
+import tempfile
+from pathlib import Path
+
 
 app = Flask(__name__)
 app.secret_key = 'vovavovavova'
 dotenv.load_dotenv()
+
+BASE_DIR = Path(__file__).parent
+DB_PATH = Path(tempfile.gettempdir()) / "flask_two_pages_app.sqlite3"
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def column_exists(cursor, table, column):
+    cursor.execute(f'PRAGMA table_info({table})')
+    return any(row['name'] == column for row in cursor.fetchall())
+
+def init_db():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS products(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        kkal INTEGER NOT NULL,
+        date INTEGER NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        
+        )
+    ''')
+
+
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+
+
 
 @app.route("/")
 def index():
@@ -108,6 +149,98 @@ def chat():
                          questions=QUEST,
                          cur=session['quest_cnt'],
                          answers=session['answers'])
+
+
+
+@app.route("/holodilnik", methods=['GET', 'POST'])
+def holodilnik():
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    conn = get_db()
+    cursor = conn.cursor()
+
+    user = session['user']
+
+    if request.method == 'POST':
+        name = request.form['name']
+         = request.form['text']
+        name = request.form['text']
+
+        cursor.execute('INSERT INTO products (user_id, name, kkal, date) VALUES (?, ?)', (user['id'], name, kkal, date))
+
+        conn.commit()
+        conn.close()
+        return redirect(url_for('notes'))
+    cursor.execute('SELECT * FROM notes WHERE user_id = ?', (user['id'],))
+
+    notes = cursor.fetchall()
+    conn.close()   
+
+    return render_template('notes.html', notes = notes)
+
+
+@app.route('/delete_note/<int:note_id>')
+def delete_note(note_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT id FROM users WHERE login = ?',
+        (session['user'],)
+    )
+    user = cursor.fetchone()
+    if user is None:
+        session.pop("user", None)
+        conn.close()
+        return redirect(url_for("login"))
+
+    cursor.execute(
+        'DELETE FROM notes WHERE id = ? AND user_id = ?',
+        (note_id, user['id'])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('notes'))
+
+
+@app.route('/change_note/<int:note_id>', methods=['GET', 'POST'])
+def change_note(note_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    new_text = request.form.get('new_text')
+    if not new_text:
+        return redirect(url_for('notes'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT id FROM users WHERE login = ?',
+        (session['user'],)
+    )
+    user = cursor.fetchone()
+    if user is None:
+        session.pop("user", None)
+        conn.close()
+        return redirect(url_for("login"))
+
+    
+
+    cursor.execute(
+       'UPDATE notes SET text = ? WHERE id = ? AND user_id = ?', (new_text, note_id, user['id'])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('notes'))
+
 
 
 
