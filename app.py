@@ -3,10 +3,12 @@ import sqlite3
 from openai import OpenAI, RateLimitError, APIError
 import requests
 import uuid
+import dotenv
+import os
 
 app = Flask(__name__)
 app.secret_key = 'vovavovavova'
-
+dotenv.load_dotenv()
 
 @app.route("/")
 def index():
@@ -20,8 +22,7 @@ def index():
         user=user
         )
 
-openrouter_key = "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"
-
+openrouter_key = os.getenv("KEY")
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=openrouter_key,
