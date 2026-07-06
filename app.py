@@ -11,6 +11,34 @@ def index():
         "index.html"
         )
 
+@app.route("/products")
+def products():
+
+    return render_template(
+        "products.html"
+        )
+
+@app.route("/racion")
+def racion():
+
+    return render_template(
+        "racion.html"
+        )
+
+@app.route("/control")
+def control():
+
+    return render_template(
+        "control.html"
+        )
+
+@app.route("/calories")
+def calories():
+
+    return render_template(
+        "calories.html"
+        )
+
 
 
 if __name__ == "__main__":
